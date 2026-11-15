@@ -1,0 +1,27 @@
+version: "3.8"
+services:
+  social-api:
+    image: ${API_IMAGE:?API_IMAGE wajib menunjuk image pada registry}
+    ports:
+      - target: 8000
+        published: ${API_PORT:-8000}
+        protocol: tcp
+        mode: ingress
+    environment:
+      ENABLE_DOCS: "${ENABLE_DOCS:-false}"
+    read_only: true
+    stop_grace_period: 70s
+    deploy:
+      mode: replicated
+      replicas: 1
+      update_config:
+        parallelism: 1
+        order: stop-first
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

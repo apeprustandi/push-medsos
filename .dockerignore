@@ -1,0 +1,6 @@
+*
+!requirements.txt
+!app.py
+!provider.py
+!static/
+!static/index.html
