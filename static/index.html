@@ -102,7 +102,7 @@ form.addEventListener('submit',async event=>{
   }catch(error){
     const invalid=error.message==='invalid_response';
     if(!invalid){$('http-status').textContent='KONEKSI TERPUTUS';$('http-status').dataset.tone='error';}
-    const message=invalid?'Respons server tidak dapat dibaca. Hasil permintaan belum dapat dipastikan.':'Koneksi ke server terputus. Hasil permintaan belum dapat dipastikan.';
+    const message=invalid?'Server atau proxy mengembalikan respons di luar format API. Hasil permintaan belum dapat dipastikan.':'Koneksi ke server terputus. Hasil permintaan belum dapat dipastikan.';
     $('network-notice').textContent=message+' Periksa target sebelum mengirim ulang.';
     $('network-notice').hidden=false;
     $('status').textContent=message;

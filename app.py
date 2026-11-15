@@ -2,6 +2,7 @@ import logging
 import os
 from pathlib import Path
 import threading
+import time
 import uuid
 from typing import Literal
 from urllib.parse import urlsplit
@@ -86,6 +87,7 @@ def envelope(request, state, retry=None, http_status=None):
 @app.middleware("http")
 async def boundary(request: Request, call_next):
     request.state.request_id = uuid.uuid4().hex
+    started = time.monotonic()
     try:
         response = await call_next(request)
     except Exception:
@@ -97,6 +99,9 @@ async def boundary(request: Request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["X-Frame-Options"] = "DENY"
+    if request.url.path == "/api/claim":
+        logger.warning("claim_response request_id=%s http_status=%s elapsed_ms=%s",
+            request.state.request_id, response.status_code, round((time.monotonic() - started) * 1000))
     return response
 
 

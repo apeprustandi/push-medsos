@@ -124,3 +124,20 @@ Pengujian logika form (Node.js 18+ tanpa dependensi): `node --test test_frontend
 - Batas tunggu browser 90 detik; ketika terputus, status klaim tidak pasti dan tidak diulang otomatis.
 
 Upgrade: build `social-api:2.3.0`, ubah `API_IMAGE` stack ke tag tersebut, kemudian redeploy. Jika `.env` lama menyetel tag sebelumnya, perbarui juga nilai tersebut. Untuk Compose lokal jalankan `docker compose up -d --build` setelah memperbarui source dan `.env`.
+
+## Diagnosis HTTP 502 di halaman web
+
+Jika halaman menampilkan bahwa respons tidak sesuai format API, respons yang diterima bukan kontrak JSON aplikasi. Penyebab belum dapat dipastikan hanya dari kode 502. Periksa body/Content-Type dan log container; kemungkinan termasuk proxy, container terhenti, atau image/routing yang tidak sesuai.
+
+Port host default 3005 dipetakan ke port container 8000. Reverse proxy di jaringan Docker yang sama harus menuju `social-api:8000`; proxy yang mengakses port host harus menuju `IP_HOST:3005`. Jangan mengarahkan proxy ke port container 3005. Pastikan `/api/claim` diteruskan ke aplikasi yang sama dengan `/`.
+
+Tes tanpa mengirim klaim sungguhan:
+
+```bash
+curl -i http://IP_HOST:3005/health
+curl -i -X POST http://IP_HOST:3005/api/claim \
+  -H 'Content-Type: application/json' \
+  -d '{}'
+```
+
+Hasil yang diharapkan: health HTTP 200 dan POST HTTP 422, keduanya JSON. Ulangi melalui domain proxy untuk membandingkan. Jika akses host bekerja tetapi domain gagal, periksa konfigurasi reverse proxy. Atur read timeout proxy minimal 75 detik. Lihat log melalui Portainer → Containers → container aplikasi → Logs. Baris `claim_response` memuat request_id, HTTP status dan durasi, tanpa URL target, token, atau detail penyedia. Jika POST tidak memiliki baris log setelah selesai, periksa apakah request mencapai container atau proses terhenti.
