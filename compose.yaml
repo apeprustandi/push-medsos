@@ -5,7 +5,7 @@ services:
       context: .
     restart: unless-stopped
     ports:
-      - "${API_PORT:-8000}:8000"
+      - "${API_PORT:-3005}:8000"
     environment:
       ENABLE_DOCS: "${ENABLE_DOCS:-false}"
     init: true

@@ -4,7 +4,7 @@ services:
     image: ${API_IMAGE:?API_IMAGE wajib menunjuk image pada registry}
     ports:
       - target: 8000
-        published: ${API_PORT:-8000}
+        published: ${API_PORT:-3005}
         protocol: tcp
         mode: ingress
     environment:
