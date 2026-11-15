@@ -4,14 +4,14 @@ Halaman utama di `/` menyediakan input URL, pilihan platform dan layanan, serta 
 
 ## Halaman utama
 
-Buka `http://SERVER_IP:3005/`. Form mengirim JSON ke `/api/claim` pada origin yang sama dan menampilkan HTTP status serta respons `message`, `request_id`, dan `data`. Ada indikator proses, pencegahan submit ganda, dan informasi cooldown dari header `Retry-After`. Halaman menyesuaikan layar ponsel. Pilihan kombinasi yang belum terintegrasi diberi keterangan dan tetap menampilkan respons HTTP 422 dari API.
+Buka `http://SERVER_IP:8000/`. Form mengirim JSON ke `/api/claim` pada origin yang sama dan menampilkan HTTP status serta respons `message`, `request_id`, dan `data`. Ada indikator proses, pencegahan submit ganda, dan informasi cooldown dari header `Retry-After`. Halaman menyesuaikan layar ponsel. Pilihan kombinasi yang belum terintegrasi diberi keterangan dan tetap menampilkan respons HTTP 422 dari API.
 
 Halaman disertakan dalam image Docker; tidak memerlukan build frontend, API key, atau hosting terpisah. Respons ditampilkan sebagai teks, bukan HTML. Jika koneksi terputus atau server mengirim format yang tidak dikenali, halaman menampilkan pesan lokal tanpa mengarang hasil klaim atau request_id. Tidak ada retry otomatis.
 
 ## Request
 
 ```bash
-curl -i -X POST http://SERVER_IP:3005/api/claim \
+curl -i -X POST http://SERVER_IP:8000/api/claim \
   -H 'Content-Type: application/json' \
   -d '{"url":"https://vt.tiktok.com/CONTOH/","platform":"tiktok","service":"views"}'
 ```
@@ -80,8 +80,8 @@ Kontrak input sudah menerima followers. Untuk mengaktifkan integrasi baru, tamba
    ```
 
 2. Di Portainer pilih **Stacks → Add stack → Web editor** dan tempel isi `portainer-stack.yaml`.
-3. Set variabel opsional: `API_PORT=3005`, `API_IMAGE=social-api:2.3.0`, `ENABLE_DOCS=false`.
-4. Deploy stack. Tidak perlu API key. Port akses default 3005 dipetakan ke port internal container 8000 (`3005:8000`). Jika stack atau `.env` lama memiliki `API_PORT`, ubah nilainya menjadi `3005`, lalu redeploy.
+3. Set variabel opsional: `API_PORT=8000`, `API_IMAGE=social-api:2.3.0`, `ENABLE_DOCS=false`.
+4. Deploy stack. Tidak perlu API key. Port akses default 8000 dipetakan ke port internal container 8000 (`8000:8000`). Jika stack atau `.env` lama memiliki `API_PORT`, ubah nilainya menjadi `8000`, lalu redeploy.
 
 Web editor memerlukan image yang sudah dibangun karena tidak memiliki source/build context. Bila Docker endpoint berada di mesin lain, push image ke registry yang dapat diakses endpoint dan set `API_IMAGE`, atau gunakan `docker save` / `docker load` untuk transfer offline. Untuk Swarm gunakan `portainer-swarm.yaml` dengan `API_IMAGE` dari registry yang dapat dijangkau node; pertahankan satu replika. Sintaks Swarm telah divalidasi, tetapi deployment Swarm belum diuji.
 
@@ -106,7 +106,7 @@ python -m venv .venv
 . .venv/bin/activate
 pip install -r requirements-dev.txt
 python -m pytest -q
-uvicorn app:app --host 0.0.0.0 --port 3005 --workers 1 --no-server-header
+uvicorn app:app --host 0.0.0.0 --port 8000 --workers 1 --no-server-header
 ```
 
 Pengujian memakai respons tiruan, tanpa klaim sungguhan. Respons eksternal aktual belum diverifikasi dalam sesi ini; format yang tidak dikenali menghasilkan HTTP 502 dengan pesan hasil belum dapat dipastikan.
@@ -129,13 +129,13 @@ Upgrade: build `social-api:2.3.0`, ubah `API_IMAGE` stack ke tag tersebut, kemud
 
 Jika halaman menampilkan bahwa respons tidak sesuai format API, respons yang diterima bukan kontrak JSON aplikasi. Penyebab belum dapat dipastikan hanya dari kode 502. Periksa body/Content-Type dan log container; kemungkinan termasuk proxy, container terhenti, atau image/routing yang tidak sesuai.
 
-Port host default 3005 dipetakan ke port container 8000. Reverse proxy di jaringan Docker yang sama harus menuju `social-api:8000`; proxy yang mengakses port host harus menuju `IP_HOST:3005`. Jangan mengarahkan proxy ke port container 3005. Pastikan `/api/claim` diteruskan ke aplikasi yang sama dengan `/`.
+Port host default 8000 dipetakan ke port container 8000. Reverse proxy di jaringan Docker yang sama harus menuju `social-api:8000`; proxy yang mengakses port host harus menuju `IP_HOST:8000`. Pastikan `/api/claim` diteruskan ke aplikasi yang sama dengan `/`.
 
 Tes tanpa mengirim klaim sungguhan:
 
 ```bash
-curl -i http://IP_HOST:3005/health
-curl -i -X POST http://IP_HOST:3005/api/claim \
+curl -i http://IP_HOST:8000/health
+curl -i -X POST http://IP_HOST:8000/api/claim \
   -H 'Content-Type: application/json' \
   -d '{}'
 ```
