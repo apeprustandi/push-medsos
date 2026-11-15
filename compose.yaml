@@ -1,6 +1,7 @@
 services:
   social-api:
     image: ${API_IMAGE:-social-api:2.3.0}
+    pull_policy: never
     build:
       context: .
     restart: unless-stopped

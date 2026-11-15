@@ -73,15 +73,18 @@ Kontrak input sudah menerima followers. Untuk mengaktifkan integrasi baru, tamba
 
 ## Portainer Docker Standalone
 
-1. Build image pada mesin Docker yang dikelola Portainer:
+1. Clone repository dan build image pada mesin Docker/endpoint yang dikelola Portainer (bukan hanya mesin tempat UI Portainer berjalan):
 
    ```bash
+   git clone https://github.com/apeprustandi/push-medsos.git
+   cd push-medsos
    docker build -t social-api:2.3.0 .
+   docker image inspect social-api:2.3.0 --format '{{.Id}}'
    ```
 
 2. Di Portainer pilih **Stacks → Add stack → Web editor** dan tempel isi `portainer-stack.yaml`.
 3. Set variabel opsional: `API_PORT=4004`, `API_IMAGE=social-api:2.3.0`, `ENABLE_DOCS=false`.
-4. Deploy stack. Tidak perlu API key. Port akses default 4004 dipetakan ke port internal container 8000 (`4004:8000`). Jika stack atau `.env` lama memiliki `API_PORT`, ubah nilainya menjadi `4004`, lalu redeploy.
+4. Matikan opsi **Re-pull image / Pull latest image** jika tersedia, lalu deploy stack. Tidak perlu API key. Port akses default 4004 dipetakan ke port internal container 8000 (`4004:8000`). Jika stack atau `.env` lama memiliki `API_PORT`, ubah nilainya menjadi `4004`, lalu redeploy.
 
 Web editor memerlukan image yang sudah dibangun karena tidak memiliki source/build context. Bila Docker endpoint berada di mesin lain, push image ke registry yang dapat diakses endpoint dan set `API_IMAGE`, atau gunakan `docker save` / `docker load` untuk transfer offline. Untuk Swarm gunakan `portainer-swarm.yaml` dengan `API_IMAGE` dari registry yang dapat dijangkau node; pertahankan satu replika. Sintaks Swarm telah divalidasi, tetapi deployment Swarm belum diuji.
 
@@ -141,3 +144,20 @@ curl -i -X POST http://IP_HOST:4004/api/claim \
 ```
 
 Hasil yang diharapkan: health HTTP 200 dan POST HTTP 422, keduanya JSON. Ulangi melalui domain proxy untuk membandingkan. Jika akses host bekerja tetapi domain gagal, periksa konfigurasi reverse proxy. Atur read timeout proxy minimal 75 detik. Lihat log melalui Portainer → Containers → container aplikasi → Logs. Baris `claim_response` memuat request_id, HTTP status dan durasi, tanpa URL target, token, atau detail penyedia. Jika POST tidak memiliki baris log setelah selesai, periksa apakah request mencapai container atau proses terhenti.
+
+## Error pull access denied for social-api
+
+Repository GitHub berisi source code, bukan image Docker Hub. `social-api:2.3.0` adalah tag image lokal; image ini belum dipublikasikan ke registry. `docker login` tidak memperbaiki image yang memang belum tersedia di registry.
+
+Konfigurasi Standalone memakai `pull_policy: never`. Build image terlebih dahulu di endpoint Docker tujuan, gunakan `portainer-stack.yaml`, dan jangan aktifkan opsi Portainer yang memaksa pull. Kebijakan ini tidak membuat image secara otomatis. Bila image tidak ada di endpoint, deploy tetap gagal dan harus didahului build/load image.
+
+Untuk checkout yang sudah ada:
+
+```bash
+cd push-medsos
+git pull --ff-only
+docker build -t social-api:2.3.0 .
+docker image inspect social-api:2.3.0 --format '{{.Id}}'
+```
+
+Sesudah build, redeploy/recreate container agar memakai image baru. Jika menggunakan registry, publish image terlebih dahulu, ubah `API_IMAGE` ke nama registry yang benar, dan ubah `pull_policy` menjadi `always` atau `missing`. File Swarm memakai alur registry dan tidak menggunakan kebijakan image lokal ini.
